@@ -28,8 +28,8 @@ namespace hplfds_sync
   private:
     int help(HazardPointerList *list, void *p, int thread_id);
   private:
-    static const int16_t NUM_TO_RECLAIM_P = 100;
-    static const int16_t LEN_TO_RECLAIM_HP = 100;
+    static const int16_t NUM_TO_RECLAIM_P = 10;
+    static const int16_t LEN_TO_RECLAIM_HP = 10;
   private:
     HazardPointerList hp_list_[MAX_THREAD_NUM];
     HazardPointerList retire_list_[MAX_THREAD_NUM];
