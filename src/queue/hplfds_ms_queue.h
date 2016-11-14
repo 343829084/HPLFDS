@@ -59,6 +59,9 @@ namespace hplfds_sync
   int HplfdsMSQueue<T, MemoryAllocator>::enqueue(T *p, int thread_id)
   {
     QueueCell *cell = (QueueCell*)(MemoryAllocator::allocate(sizeof(QueueCell)));
+    if (UNLIKELY(cell == NULL)) {
+      return ERROR_NO_MEMORY;
+    }
     cell->p = p;
     cell->next = NULL;
     QueueCell *volatile tail = NULL;
