@@ -10,14 +10,12 @@ HplfdsStack<int, HplfdsMemoryAllocator> stack;
 void* f(void *arg)
 {
   int id = *((int*)(arg));
-  int *q = NULL;
   int ret = 0;
-  int j = NUM * id;
+  int j = 0;
   for (int i = 0; i < NUM; i++) {
-    int *p = new int(j++);
-    while(stack.push(p, id) != 0) {}
+    while(stack.push(i, id) != 0) {}
     while(1) {
-      ret = stack.pop(q, id);
+      ret = stack.pop(j, id);
       if (ret == 0 || ret == ERROR_EMPTY) {
         break;
       }

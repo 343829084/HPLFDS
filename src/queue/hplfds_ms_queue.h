@@ -12,8 +12,8 @@ namespace hplfds_sync
   private:
     struct QueueCell
     {
-      T *p;
-      QueueCell *next;
+      T element_;
+      QueueCell *next_;
     };
     struct HazardPointerRecord
     {
@@ -34,8 +34,8 @@ namespace hplfds_sync
     };
   public:
     HplfdsMSQueue();
-    int enqueue(T *p, int thread_id);
-    int dequeue(T *&p, int thread_id);
+    int enqueue(const T &p, int thread_id);
+    int dequeue(T &p, int thread_id);
     bool empty(int thread_id);
   private:
     void spin();
@@ -50,28 +50,27 @@ namespace hplfds_sync
   {
     dummy_node_ = (QueueCell*)(MemoryAllocator::allocate(sizeof(QueueCell)));
     MY_ASSERT(dummy_node_ != NULL);
-    dummy_node_->next = NULL;
-    dummy_node_->p = NULL;
+    dummy_node_->next_ = NULL;
     head_ = dummy_node_;
     tail_ = dummy_node_;
   }
   template<class T, class MemoryAllocator>
-  int HplfdsMSQueue<T, MemoryAllocator>::enqueue(T *p, int thread_id)
+  int HplfdsMSQueue<T, MemoryAllocator>::enqueue(const T &element, int thread_id)
   {
     QueueCell *cell = (QueueCell*)(MemoryAllocator::allocate(sizeof(QueueCell)));
     if (UNLIKELY(cell == NULL)) {
       return ERROR_NO_MEMORY;
     }
-    cell->p = p;
-    cell->next = NULL;
+    cell->element_ = element;
+    cell->next_ = NULL;
     QueueCell *volatile tail = NULL;
     while(true) {
       tail = tail_;
       ACQUIRE_POINTER(tail);
       if (tail == tail_) {
-        QueueCell *next = tail->next;
+        QueueCell *next = tail->next_;
         if (next == NULL) {
-          if (CAS(&tail->next, next, cell)) {
+          if (CAS(&tail->next_, next, cell)) {
             CAS(&tail_, tail, cell);
             break;
           } else {
@@ -87,9 +86,8 @@ namespace hplfds_sync
     return SUCCESS;
   }
   template<class T, class MemoryAllocator>
-  int HplfdsMSQueue<T, MemoryAllocator>::dequeue(T *&p, int thread_id)
+  int HplfdsMSQueue<T, MemoryAllocator>::dequeue(T &element, int thread_id)
   {
-    p = NULL;
     QueueCell *volatile tail = NULL;
     QueueCell *volatile head = NULL;
     QueueCell *next = NULL;
@@ -104,7 +102,7 @@ namespace hplfds_sync
       if (head != head_) {
         continue;
       } else {
-        next = head->next;
+        next = head->next_;
         if (head == tail) {
           if (next == NULL) {
             return ERROR_EMPTY;
@@ -113,10 +111,10 @@ namespace hplfds_sync
           }
         } else {
           ACQUIRE_POINTER(next);
-          if (next != head->next) {
+          if (next != head->next_) {
             continue;
           }
-          p = next->p;
+          element = next->element_;
           if (CAS(&head_, head, next)) {
             break;
           } else {
@@ -133,7 +131,7 @@ namespace hplfds_sync
   void HplfdsMSQueue<T, MemoryAllocator>::spin()
   {
     static const int64_t INIT_LOOP = 1000000;
-    static const int64_t MAX_LOOP = 1000000000;
+    static const int64_t MAX_LOOP = 8000000;
     static __thread int64_t delay = 0;
     if (delay <= 0) {
       delay = INIT_LOOP;

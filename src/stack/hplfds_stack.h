@@ -9,8 +9,8 @@ namespace hplfds_sync
   private:
     struct StackCell
     {
-      T *p;
-      StackCell *next;
+      T element_;
+      StackCell *next_;
     };
     enum StackOp
     {
@@ -32,12 +32,12 @@ namespace hplfds_sync
     }CACHE_ALIGNED;
   public:
     HplfdsStack();
-    int push(T *p, int thread_id);
-    int pop(T *&p, int thread_id);
+    int push(const T &element, int thread_id);
+    int pop(T &element, int thread_id);
     bool empty(int thread_id);
   private:
     INLINE int try_stack_push(StackCell *cell, int thread_id);
-    INLINE int try_stack_pop(T *&p, int thread_id);
+    INLINE int try_stack_pop(T &element, int thread_id);
     INLINE int try_les_op(ThreadInfo *thread_info);
     INLINE int try_collision(ThreadInfo *p, ThreadInfo *q, int me, int him);
     INLINE int finish_collision(ThreadInfo *p, int me);
@@ -54,8 +54,7 @@ namespace hplfds_sync
   {
     dummy_node_ = (StackCell*)(MemoryAllocator::allocate(sizeof(StackCell)));
     MY_ASSERT(dummy_node_ != NULL);
-    dummy_node_->next = NULL;
-    dummy_node_->p = NULL;
+    dummy_node_->next_ = NULL;
     top_ = dummy_node_;
     for (int i = 0; i < MAX_THREAD_NUM; i++) {
       collision_[i].thread_id = -1;
@@ -63,7 +62,7 @@ namespace hplfds_sync
     }
   }
   template<class T, class MemoryAllocator>
-  int HplfdsStack<T, MemoryAllocator>::push(T *p, int thread_id)
+  int HplfdsStack<T, MemoryAllocator>::push(const T &element, int thread_id)
   {
     if (UNLIKELY(thread_id < 0 || thread_id >= MAX_THREAD_NUM)) {
       return ERROR_INVALID_ARGUMENT;
@@ -72,7 +71,7 @@ namespace hplfds_sync
     if (UNLIKELY(cell == NULL)) {
       return ERROR_NO_MEMORY;
     }
-    cell->p = p;
+    cell->element_ = element;
     int ret = 0;
     ThreadInfo *thread_info = NULL;
     while (true) {
@@ -106,16 +105,15 @@ namespace hplfds_sync
     return ERROR_UNEXPECTED;
   }
   template<class T, class MemoryAllocator>
-  int HplfdsStack<T, MemoryAllocator>::pop(T *&p, int thread_id)
+  int HplfdsStack<T, MemoryAllocator>::pop(T &element, int thread_id)
   {
     int ret = ERROR_AGAIN;
-    p = NULL;
     if (UNLIKELY(thread_id < 0 || thread_id >= MAX_THREAD_NUM)) {
       return ERROR_INVALID_ARGUMENT;
     }
     ThreadInfo *thread_info = NULL;
     while(true) {
-      ret = try_stack_pop(p, thread_id);
+      ret = try_stack_pop(element, thread_id);
       if (ret == SUCCESS || ret == ERROR_EMPTY) {
         if (thread_info != NULL) {
           memory_manager_.retire(thread_info, thread_id);
@@ -137,8 +135,7 @@ namespace hplfds_sync
         ret = try_les_op(thread_info);
         if (ret == SUCCESS) {
           MY_ASSERT(thread_info->cell != NULL);
-          p = thread_info->cell->p;
-          MY_ASSERT(p != NULL);
+          element = thread_info->cell->element_;
           memory_manager_.retire(thread_info, thread_id);
           memory_manager_.retire(thread_info->cell, thread_id);
           return ret;
@@ -154,7 +151,7 @@ namespace hplfds_sync
     StackCell *tmp = top_;
     memory_manager_.acquire(tmp, thread_id);
     if (tmp == top_) {
-      cell->next = tmp;
+      cell->next_ = tmp;
       if (CAS(&top_, tmp, cell)) {
         ret = SUCCESS;
       }
@@ -163,16 +160,15 @@ namespace hplfds_sync
     return ret;
   }
   template<class T, class MemoryAllocator>
-  int HplfdsStack<T, MemoryAllocator>::try_stack_pop(T *&p, int thread_id)
+  int HplfdsStack<T, MemoryAllocator>::try_stack_pop(T &element, int thread_id)
   {
     StackCell *tmp = top_;
-    p = NULL;
     memory_manager_.acquire(tmp, thread_id);
     if (tmp == top_) {
       if (tmp != dummy_node_) {
-        StackCell *q = tmp->next;
+        StackCell *q = tmp->next_;
         if (CAS(&top_, tmp, q)) { //pop successfully
-          p = tmp->p;
+          element = tmp->element_;
           memory_manager_.release(tmp, thread_id);
           memory_manager_.retire(tmp, thread_id);
           memory_manager_.reclaim(thread_id);

@@ -6,17 +6,15 @@
 using namespace std;
 using namespace hplfds_sync;
 HplfdsMSQueue<int, HplfdsMemoryAllocator> queue;
-#define NUM 10000000
+#define NUM 50000000
 void* f(void *arg)
 {
   int id = *((int*)(arg));
-  int *q = NULL;
   int ret = 0;
-  int j = NUM * id;
+  int j = 0;
   for (int i = 0; i < NUM; i++) {
-    int *p = new int(j++);
-    ret = queue.enqueue(p, id);
-    ret = queue.dequeue(q, id);
+    ret = queue.enqueue(i, id);
+    ret = queue.dequeue(j, id);
     //delete q;
   }
   return NULL;
@@ -24,12 +22,9 @@ void* f(void *arg)
 void* enqueuer(void *arg)
 {
   int id = *((int*)(arg));
-  int *q = NULL;
   int ret = 0;
-  int j = NUM * id;
   for (int i = 0; i < NUM; i++) {
-    int *p = new int(j++);
-    ret = queue.enqueue(p, id);
+    ret = queue.enqueue(i, id);
     //delete p;
   }
   return NULL;
@@ -37,10 +32,9 @@ void* enqueuer(void *arg)
 void* dequeuer(void *arg)
 {
   int id = *((int*)(arg));
-  int *q = NULL;
   int ret = 0;
   for (int i = 0; i < NUM * 4; i++) {
-    ret = queue.dequeue(q, id);
+    ret = queue.dequeue(i, id);
     //delete p;
   }
   return NULL;
@@ -77,8 +71,8 @@ void test2()
   int id2 = 1;
   timespec ts1, ts2;
   clock_gettime(CLOCK_MONOTONIC, &ts1);
-  pthread_create(&t1, NULL, enqueuer, &id1);
-  pthread_create(&t2, NULL, dequeuer, &id2);
+  pthread_create(&t1, NULL, f, &id1);
+  pthread_create(&t2, NULL, f, &id2);
   pthread_join(t1, NULL);
   pthread_join(t2, NULL);
   clock_gettime(CLOCK_MONOTONIC, &ts2);
@@ -88,6 +82,6 @@ void test2()
 int main()
 {
   srand(time(NULL));
-  test4();
+  test2();
   return 0;
 }
