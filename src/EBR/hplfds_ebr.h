@@ -75,7 +75,7 @@ private:
   {
     static __thread int tid = -1;
     if (tid == -1) {
-      tid = __sync_fetch_and_add(&thread_count_, 1);
+      tid = FETCH_AND_ADD(&thread_count_, 1);
     }
     return tid;
   }
@@ -91,7 +91,7 @@ private:
 private:
   RetireListType retire_lists_[3];
   EpochType global_epoch_;
-  EpochType local_epoches_[MAX_THREAD_NUM] ;
+  EpochType local_epoches_[MAX_THREAD_NUM];
   ActiveFlagType active_flags_[MAX_THREAD_NUM];
   int thread_count_;
 };

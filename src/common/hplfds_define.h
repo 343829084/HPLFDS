@@ -1,8 +1,8 @@
 #ifndef HPLFDS_DEFINE
 #define HPLFDS_DEFINE
-#include <stdint.h>
-#include <string.h>
-#include <stdlib.h>
+#include <cstdint>
+#include <cstring>
+#include <cstdlib>
 #define MAX_THREAD_NUM 4
 #define MY_ASSERT(condition)\
   if (!(condition)) {\
@@ -17,6 +17,9 @@
 #define CPU_RELAX() __asm__ __volatile__("pause\n": : :"memory")
 #define ACCESS_ONCE(x) (*((volatile __typeof__(x) *) &x))
 #define CPU_BARRIER() __sync_synchronize()
+#define COMPILER_BARRIER() __asm__ __volatile__("" : : : "memory")
+#define ADD_AND_FETCH(address,offset) __sync_add_and_fetch(address,offset)
+#define FETCH_AND_ADD(address,offset) __sync_fetch_and_add(address,offset)
 //error
 #define SUCCESS 0
 #define ERROR_ENTRY_ALREADY_EXISTS  -1

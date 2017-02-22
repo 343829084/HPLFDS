@@ -18,7 +18,7 @@ void* reader(void *arg)
   int sum = 0;
   while(true) {
     g_manager.reader_enter();
-    sum += ACCESS_ONCE(*p);
+    sum += *(ACCESS_ONCE(p));
     g_manager.reader_leave();
   }
   return NULL;
