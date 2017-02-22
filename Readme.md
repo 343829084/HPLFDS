@@ -48,5 +48,23 @@ g++ -pthread -O2 -lrt src/test_hplfds_ms_queue.cpp
 
 [Simple, Fast, and Practical Non-Blocking and Blocking Concurrent Queue Algorithms](https://www.research.ibm.com/people/m/michael/podc-1996.pdf)
 
+## Epoch Based Reclamation
+
+An effective lock free garbage collection impl for lock free data strcuture
+
+### Feature
+
+> * Single Writer, Multi Readers
+
+### Demo
+
+g++ -pthread -O2 src/test_hplfds_ebr.cpp
+
+### Reference
+
+Chinese Version:
+
+[Lock Free中的Epoch Based Reclamation](http://www.yebangyu.org/blog/2016/09/09/epochbasedreclamation/)
+
 ## HashMap
 

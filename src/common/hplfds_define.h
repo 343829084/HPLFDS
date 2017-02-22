@@ -15,6 +15,8 @@
 #define CACHELINE_SIZE 64
 #define CACHE_ALIGNED __attribute__((aligned(CACHELINE_SIZE)))
 #define CPU_RELAX() __asm__ __volatile__("pause\n": : :"memory")
+#define ACCESS_ONCE(x) (*((volatile __typeof__(x) *) &x))
+#define CPU_BARRIER() __sync_synchronize()
 //error
 #define SUCCESS 0
 #define ERROR_ENTRY_ALREADY_EXISTS  -1
