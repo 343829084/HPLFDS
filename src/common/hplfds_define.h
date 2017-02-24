@@ -16,7 +16,7 @@
 #define CACHE_ALIGNED __attribute__((aligned(CACHELINE_SIZE)))
 #define CPU_RELAX() __asm__ __volatile__("pause\n": : :"memory")
 #define ACCESS_ONCE(x) (*((volatile __typeof__(x) *) &x))
-#define CPU_BARRIER() __sync_synchronize()
+#define CPU_BARRIER() __asm__ __volatile__("mfence": : :"memory")
 #define COMPILER_BARRIER() __asm__ __volatile__("" : : : "memory")
 #define ADD_AND_FETCH(address,offset) __sync_add_and_fetch(address,offset)
 #define FETCH_AND_ADD(address,offset) __sync_fetch_and_add(address,offset)
